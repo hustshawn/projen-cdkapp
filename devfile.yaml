@@ -93,5 +93,6 @@ events:
     - update-aws-config
     - generate-mde-restart
     - upgrade-aws-cdk
-    - cdk-init
+    - install-projen
+    # - cdk-init
     - install-kubectl
