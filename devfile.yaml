@@ -15,8 +15,6 @@ components:
         - name: docker-store
           path: /var/lib/docker
   - name: docker-store
-    volume:
-      size: 16Gi
 commands:
   # generate the debug log
   - id: exec-env-debug
@@ -61,13 +59,13 @@ commands:
       component: aws-runtime
       commandLine: | 
         cat << EOF >> /home/mde-user/.aws/config
-
         [default]
         region = us-east-1
         sso_session = sso
         sso_account_id = 985955614379
         sso_role_name = AdministratorAccess
         output = json
+
         [sso-session sso]
         sso_start_url = https://hustshawn-sso.awsapps.com/start
         sso_region = us-east-1
@@ -80,9 +78,7 @@ commands:
       component: aws-runtime
       commandLine: | 
         cat << EOF > /home/mde-user/bin/mde-restart && chmod a+x /home/mde-user/bin/mde-restart
-
         #!/bin/bash
-
         /aws/mde/mde start --location "${PROJECT_SOURCE##${PROJECTS_ROOT}/}/devfile.yaml"
         EOF
 
@@ -94,5 +90,4 @@ events:
     - generate-mde-restart
     - upgrade-aws-cdk
     - install-projen
-    # - cdk-init
     - install-kubectl
