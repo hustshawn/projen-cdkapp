@@ -18,81 +18,52 @@ components:
     volume:
       size: 16Gi
 commands:
-  # generate the debug log
-  - id: exec-env-debug
+  - id: activate-nvm
     exec:
       component: aws-runtime
-      commandLine: "env > /tmp/exec-env-debug.log"
-  # create $HOME/bin if not exists
-  - id: create-home-bin
+      commandLine: which nvm || echo "[ -s '/usr/local/.mde-user/.nvm/nvm.sh' ] && source /usr/local/.mde-user/.nvm/nvm.sh" >> $HOME/.bashrc
+  # Has to execute nvm use 18 after provisioned.
+  # - id: use-node-18
+  #   exec:
+  #     component: aws-runtime
+  #     commandLine: source $HOME/.bashrc && nvm use 18
+  - id: update-cdk-version
     exec:
       component: aws-runtime
-      commandLine: "test -d $HOME/bin || mkdir $HOME/bin"
-  # upgrade to the latest aws-cdk
-  - id: upgrade-aws-cdk
-    exec:
-      component: aws-runtime
-      commandLine: "npm i -g aws-cdk"
-  # upgrade to the latest aws-cdk
+      commandLine: npm install -g aws-cdk
   - id: install-projen
     exec:
       component: aws-runtime
-      commandLine: "npm i -g projen"
-  # cdk init
-  - id: cdk-init
-    exec:
-      component: aws-runtime
-      commandLine: "cd ${PROJECT_SOURCE} && [ -f devfile.yaml ] && [ ! -f README.md ] &&
-        ( mv devfile.yaml .devfile.yaml && /usr/bin/cdk init -l typescript; mv .devfile.yaml devfile.yaml )"
-  # run `npx projen new` to initialize the project with projen
-  - id: npx-projen-new
-    exec:
-      component: aws-runtime
-      commandLine: "cd ${PROJECT_SOURCE} && npx projen new awscdk-app-ts"
-  # install the latest kubectl in $HOME/bin
-  - id: install-kubectl
-    exec:
-      component: aws-runtime
-      commandLine: "curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/1.28.3/2023-11-14/bin/linux/amd64/kubectl && chmod +x kubectl && mv kubectl $HOME/bin/"
-      workingDir: /tmp
-  # update ~/.aws/config
+      commandLine: npm install -g projen
   - id: update-aws-config
     exec:
       component: aws-runtime
       commandLine: | 
-        cat << EOF >> /home/mde-user/.aws/config
-
+        cat << EOF > /home/mde-user/.aws/config
         [default]
         region = us-east-1
         sso_session = sso
         sso_account_id = 985955614379
         sso_role_name = AdministratorAccess
         output = json
+
         [sso-session sso]
         sso_start_url = https://hustshawn-sso.awsapps.com/start
         sso_region = us-east-1
         sso_registration_scopes = sso:account:access
         EOF
-
-  # generate ~/bin/mde-restart
-  - id: generate-mde-restart
+  # install the latest kubectl in $HOME/bin
+  - id: install-kubectl
     exec:
       component: aws-runtime
-      commandLine: | 
-        cat << EOF > /home/mde-user/bin/mde-restart && chmod a+x /home/mde-user/bin/mde-restart
-
-        #!/bin/bash
-
-        /aws/mde/mde start --location "${PROJECT_SOURCE##${PROJECTS_ROOT}/}/devfile.yaml"
-        EOF
-
-events:   
+      commandLine: "which kubectl || curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/1.28.3/2023-11-14/bin/linux/amd64/kubectl && chmod +x kubectl && mkdir -p $HOME/bin && mv kubectl $HOME/bin/"
+      workingDir: /tmp
+events:
   postStart:
-    - exec-env-debug
-    - create-home-bin
-    - update-aws-config
-    - generate-mde-restart
-    - upgrade-aws-cdk
+    - activate-nvm
+    # - use-node-18
     - install-projen
-    # - cdk-init
+    - update-cdk-version
+    - update-aws-config
     - install-kubectl
+    
