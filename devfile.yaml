@@ -58,6 +58,18 @@ commands:
       component: aws-runtime
       commandLine: "which kubectl || curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/1.28.3/2023-11-14/bin/linux/amd64/kubectl && chmod +x kubectl && mkdir -p $HOME/bin && mv kubectl $HOME/bin/"
       workingDir: /tmp
+  # generate ~/bin/mde-restart
+  - id: generate-mde-restart
+    exec:
+      component: aws-runtime
+      commandLine: | 
+        cat << EOF > mde-restart && chmod a+x mde-restart && mv mde-restart $HOME/bin/
+
+        #!/bin/bash
+
+        /aws/mde/mde start --location "${PROJECT_SOURCE##${PROJECTS_ROOT}/}/devfile.yaml"
+        EOF
+      workingDir: /tmp
 events:
   postStart:
     - activate-nvm
@@ -66,4 +78,5 @@ events:
     - update-cdk-version
     - update-aws-config
     - install-kubectl
+    - generate-mde-restart
     
